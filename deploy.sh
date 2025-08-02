@@ -203,8 +203,8 @@ build_backend() {
         BUILD_CMD="docker buildx build"
         BUILD_CMD="$BUILD_CMD -f Dockerfile.ultra-fast"
         BUILD_CMD="$BUILD_CMD --platform linux/amd64,linux/arm64"
-        BUILD_CMD="$BUILD_CMD --cache-from type=local,src=/tmp/.buildx-cache-backend"
-        BUILD_CMD="$BUILD_CMD --cache-to type=local,dest=/tmp/.buildx-cache-backend-new,mode=max"
+        # BUILD_CMD="$BUILD_CMD --cache-from type=local,src=/tmp/.buildx-cache-backend"
+        # BUILD_CMD="$BUILD_CMD --cache-to type=local,dest=/tmp/.buildx-cache-backend-new,mode=max"
         BUILD_CMD="$BUILD_CMD $BUILD_ARGS $TAGS"
         
         if [ "$PUSH_IMAGES" = true ]; then
@@ -223,11 +223,11 @@ build_backend() {
         # Execute build
         eval $BUILD_CMD
         
-        # Move cache
-        if [ -d "/tmp/.buildx-cache-backend-new" ]; then
-            rm -rf /tmp/.buildx-cache-backend
-            mv /tmp/.buildx-cache-backend-new /tmp/.buildx-cache-backend
-        fi
+        # Move cache (disabled for compatibility)
+        # if [ -d "/tmp/.buildx-cache-backend-new" ]; then
+        #     rm -rf /tmp/.buildx-cache-backend
+        #     mv /tmp/.buildx-cache-backend-new /tmp/.buildx-cache-backend
+        # fi
         
         print_success "Backend built successfully!"
         print_status "Backend tags: ${BACKEND_IMAGE}:${TAG}, ${BACKEND_IMAGE}:${ENVIRONMENT}, ${BACKEND_IMAGE}:latest"
@@ -259,8 +259,8 @@ build_frontend() {
         # Build command
         BUILD_CMD="docker buildx build"
         BUILD_CMD="$BUILD_CMD --platform linux/amd64,linux/arm64"
-        BUILD_CMD="$BUILD_CMD --cache-from type=local,src=/tmp/.buildx-cache-frontend"
-        BUILD_CMD="$BUILD_CMD --cache-to type=local,dest=/tmp/.buildx-cache-frontend-new,mode=max"
+        # BUILD_CMD="$BUILD_CMD --cache-from type=local,src=/tmp/.buildx-cache-frontend"
+        # BUILD_CMD="$BUILD_CMD --cache-to type=local,dest=/tmp/.buildx-cache-frontend-new,mode=max"
         BUILD_CMD="$BUILD_CMD $BUILD_ARGS $TAGS"
         
         if [ "$PUSH_IMAGES" = true ]; then
@@ -279,11 +279,11 @@ build_frontend() {
         # Execute build
         eval $BUILD_CMD
         
-        # Move cache
-        if [ -d "/tmp/.buildx-cache-frontend-new" ]; then
-            rm -rf /tmp/.buildx-cache-frontend
-            mv /tmp/.buildx-cache-frontend-new /tmp/.buildx-cache-frontend
-        fi
+        # Move cache (disabled for compatibility)
+        # if [ -d "/tmp/.buildx-cache-frontend-new" ]; then
+        #     rm -rf /tmp/.buildx-cache-frontend
+        #     mv /tmp/.buildx-cache-frontend-new /tmp/.buildx-cache-frontend
+        # fi
         
         print_success "Frontend built successfully!"
         print_status "Frontend tags: ${FRONTEND_IMAGE}:${TAG}, ${FRONTEND_IMAGE}:${ENVIRONMENT}, ${FRONTEND_IMAGE}:latest"
