@@ -46,10 +46,7 @@ Content-Type: application/json
 }
 ```
 
-**Error Messages:**
-
-- `409`: "อีเมลนี้ถูกใช้งานแล้ว กรุณาลองใช้อีเมลอื่นหรือเข้าสู่ระบบหากคุณมีบัญชีอยู่แล้ว"
-- `400`: "รหัสผ่านต้องประกอบด้วย ตัวอักษรพิมพ์เล็ก (a-z) ตัวอักษรพิมพ์ใหญ่ (A-Z) ตัวเลข (0-9) และอักขระพิเศษ (@$!%\*?&)"
+**Rate Limit:** 5 requests/minute
 
 ### Login
 
@@ -63,33 +60,50 @@ Content-Type: application/json
 }
 ```
 
-**Response (Success):**
-
-```json
-{
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expires_in": 3600,
-  "user": {
-    "id": "uuid-string",
-    "email": "user@example.com",
-    "name": "สมชาย ใจดี",
-    "role": "USER"
-  }
-}
-```
-
-**Error Messages:**
-
-- `401`: "ไม่พบบัญชีผู้ใช้งานที่ตรงกับอีเมลนี้ กรุณาตรวจสอบอีเมลอีกครั้งหรือสมัครสมาชิกใหม่"
-- `401`: "รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบรหัสผ่านและลองใหม่อีกครั้ง"
-- `401`: "บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบเพื่อขอความช่วยเหลือ"
+**Rate Limit:** 10 requests/minute
 
 ### Get Profile
 
 ```http
 GET /api/auth/profile
 Authorization: Bearer <access_token>
+```
+
+### Update Profile
+
+```http
+PATCH /api/auth/profile
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "name": "ชื่อใหม่",
+  "email": "newemail@example.com"
+}
+```
+
+### Change Password
+
+```http
+PATCH /api/auth/change-password
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "oldPassword": "OldPassword123!",
+  "newPassword": "NewPassword123!"
+}
+```
+
+### Upload Profile Image
+
+```http
+POST /api/auth/upload-profile-image
+Authorization: Bearer <access_token>
+Content-Type: multipart/form-data
+
+Form Data:
+- image: <file> (max 5MB, formats: jpg, jpeg, png, gif)
 ```
 
 ### Refresh Token
@@ -102,6 +116,8 @@ Content-Type: application/json
   "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
+
+**Rate Limit:** 5 requests/minute
 
 ### Logout
 
@@ -124,17 +140,17 @@ Content-Type: application/json
 }
 ```
 
-### Clear All Sessions (Development)
-
-```http
-POST /api/auth/clear-sessions
-```
-
 ### Logout All Users (Admin Only)
 
 ```http
 POST /api/auth/logout-all
 Authorization: Bearer <admin_access_token>
+```
+
+### Clear All Sessions (Development)
+
+```http
+POST /api/auth/clear-sessions
 ```
 
 ---
@@ -268,7 +284,7 @@ Authorization: Bearer <access_token>
 
 ---
 
-## 📁 File Upload Endpoints
+## 📁 Image Upload Endpoints
 
 ### Upload Single Image
 
@@ -282,6 +298,8 @@ Form Data:
 - postId: "uuid-string" (optional)
 ```
 
+**Rate Limit:** 10 requests/minute
+
 ### Upload Multiple Images
 
 ```http
@@ -293,6 +311,8 @@ Form Data:
 - images: <file[]> (max 10 files)
 - postId: "uuid-string" (optional)
 ```
+
+**Rate Limit:** 5 requests/minute
 
 ### Get My Images
 
@@ -315,6 +335,10 @@ DELETE /api/upload/images/:fileId
 Authorization: Bearer <access_token>
 ```
 
+---
+
+## 📄 Document Upload Endpoints
+
 ### Upload Single Document
 
 ```http
@@ -327,6 +351,8 @@ Form Data:
 - postId: "uuid-string" (optional)
 ```
 
+**Rate Limit:** 5 requests/minute
+
 ### Upload Multiple Documents
 
 ```http
@@ -338,6 +364,8 @@ Form Data:
 - documents: <file[]> (max 5 files)
 - postId: "uuid-string" (optional)
 ```
+
+**Rate Limit:** 3 requests/minute
 
 ### Get My Documents
 
@@ -362,40 +390,133 @@ Authorization: Bearer <access_token>
 
 ---
 
-## 📂 File Management Endpoints
+## 🔄 Chunked Upload Endpoints
 
-### Get My Files
+### Initiate Chunked Upload
 
 ```http
-GET /api/files/my-files?type=IMAGE&status=COMPLETED&page=1&limit=10
+POST /api/upload/chunk/initiate
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "fileName": "largefile.mp4",
+  "fileSize": 104857600,
+  "fileType": "video/mp4",
+  "chunkSize": 1048576,
+  "postId": "uuid-string" (optional)
+}
+```
+
+**Rate Limit:** 10 requests/minute
+
+### Upload Chunk
+
+```http
+POST /api/upload/chunk/upload
+Authorization: Bearer <access_token>
+Content-Type: multipart/form-data
+
+Form Data:
+- fileId: "uuid-string"
+- chunkIndex: 0
+- chunk: <file>
+```
+
+**Rate Limit:** 100 requests/minute
+
+### Complete Chunked Upload
+
+```http
+POST /api/upload/chunk/complete
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "fileId": "uuid-string"
+}
+```
+
+### Get Upload Progress
+
+```http
+GET /api/upload/chunk/progress/:fileId
+Authorization: Bearer <access_token>
+```
+
+### Cancel Upload
+
+```http
+DELETE /api/upload/chunk/cancel/:fileId
+Authorization: Bearer <access_token>
+```
+
+---
+
+## 📂 File Serving & Management Endpoints
+
+### Serve Files
+
+```http
+GET /files/serve/images/:filename
+GET /files/serve/documents/:filename
+GET /files/serve/videos/:filename
+GET /files/serve/audio/:filename
+GET /files/serve/thumbnails/:filename
+```
+
+### Download File
+
+```http
+GET /files/download/:fileId
+Authorization: Bearer <access_token>
+```
+
+### Get File Information
+
+```http
+GET /files/info/:fileId
+Authorization: Bearer <access_token>
+```
+
+### List Files
+
+```http
+GET /files/list
+Authorization: Bearer <access_token>
+```
+
+### Get My Files (with pagination)
+
+```http
+GET /files/my-files?type=IMAGE&status=COMPLETED&page=1&limit=10
 Authorization: Bearer <access_token>
 ```
 
 **Query Parameters:**
-
 - `type`: IMAGE | DOCUMENT | VIDEO | AUDIO | OTHER
 - `status`: UPLOADING | PROCESSING | COMPLETED | FAILED
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 10)
 
-### Get All Files
+### Get All Files (with pagination)
 
 ```http
-GET /api/files/all-files?type=IMAGE&status=COMPLETED&page=1&limit=10
+GET /files/all-files?type=IMAGE&status=COMPLETED&page=1&limit=10
 Authorization: Bearer <access_token>
 ```
 
 ### Get File Statistics
 
 ```http
-GET /api/files/stats
+GET /files/stats
 Authorization: Bearer <access_token>
 ```
 
 ### Get File Details
 
 ```http
-GET /api/files/:fileId/details
+GET /files/:fileId/details
 Authorization: Bearer <access_token>
 ```
 
@@ -406,19 +527,19 @@ Authorization: Bearer <access_token>
 ### Basic Health Check
 
 ```http
-GET /api/health
+GET /health
 ```
 
 ### Detailed Health Check
 
 ```http
-GET /api/health/detailed
+GET /health/detailed
 ```
 
 ### Error Statistics
 
 ```http
-GET /api/health/errors
+GET /health/errors
 ```
 
 ---
@@ -491,24 +612,6 @@ Authorization: Bearer <access_token>
 GET /api/error-messages/auth
 ```
 
-**Response:**
-
-```json
-{
-  "login": {
-    "invalidEmail": "กรุณากรอกที่อยู่อีเมลให้ถูกต้อง เช่น example@email.com",
-    "userNotFound": "ไม่พบบัญชีผู้ใช้งานที่ตรงกับอีเมลนี้ กรุณาตรวจสอบอีเมลอีกครั้งหรือสมัครสมาชิกใหม่",
-    "wrongPassword": "รหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบรหัสผ่านและลองใหม่อีกครั้ง",
-    "accountSuspended": "บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบเพื่อขอความช่วยเหลือ"
-  },
-  "register": {
-    "emailExists": "อีเมลนี้ถูกใช้งานแล้ว กรุณาลองใช้อีเมลอื่นหรือเข้าสู่ระบบหากคุณมีบัญชีอยู่แล้ว",
-    "weakPassword": "รหัสผ่านต้องประกอบด้วย ตัวอักษรพิมพ์เล็ก (a-z) ตัวอักษรพิมพ์ใหญ่ (A-Z) ตัวเลข (0-9) และอักขระพิเศษ (@$!%*?&)",
-    "shortPassword": "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร"
-  }
-}
-```
-
 ### Get Validation Error Messages
 
 ```http
@@ -538,7 +641,6 @@ GET /api/frontend/error-message?type=login&field=email&code=invalid
 ```
 
 **Query Parameters:**
-
 - `type`: login | register | validation
 - `field`: email | password | name | general
 - `code`: invalid | notFound | wrong | empty | etc.
@@ -549,28 +651,6 @@ GET /api/frontend/error-message?type=login&field=email&code=invalid
 GET /api/frontend/form-config
 ```
 
-**Response:**
-
-```json
-{
-  "login": {
-    "fields": [
-      {
-        "name": "email",
-        "type": "email",
-        "label": "ที่อยู่อีเมล",
-        "placeholder": "กรอกอีเมลของคุณ",
-        "required": true,
-        "validation": {
-          "required": "กรุณากรอกที่อยู่อีเมลของคุณ",
-          "email": "กรุณากรอกที่อยู่อีเมลให้ถูกต้อง เช่น example@email.com"
-        }
-      }
-    ]
-  }
-}
-```
-
 ### Get UI Text
 
 ```http
@@ -579,25 +659,40 @@ GET /api/frontend/ui-text
 
 ---
 
-## 🔒 Authentication Headers
+## 🔒 Authentication & Authorization
 
+### JWT Authentication
 For protected endpoints, include the JWT token in the Authorization header:
 
 ```http
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
+### Role-Based Access Control
+- **USER**: Basic user permissions
+- **ADMIN**: Full administrative permissions
+
+### Permission Matrix
+
+| Endpoint Category | USER | ADMIN |
+|------------------|------|-------|
+| Authentication | ✅ | ✅ |
+| Own Profile/Posts | ✅ | ✅ |
+| File Upload/Management | ✅ | ✅ |
+| User Management | ❌ | ✅ |
+| Create Admin | ❌ | ✅ |
+| Monitoring | ✅ | ✅ |
+| System Operations | ❌ | ✅ |
+
 ---
 
 ## 📊 HTTP Status Codes
 
 ### Success Codes
-
 - `200`: OK - Request successful
 - `201`: Created - Resource created successfully
 
 ### Error Codes
-
 - `400`: Bad Request - ข้อมูลไม่ถูกต้อง
 - `401`: Unauthorized - การยืนยันตัวตนไม่สำเร็จ
 - `403`: Forbidden - ไม่มีสิทธิ์เข้าถึง
@@ -608,46 +703,78 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ---
 
-## 🌐 CORS Configuration
+## 🔧 Rate Limiting
 
-The API accepts requests from:
-
-- `http://localhost:3000`
-- `http://localhost:3001`
-- `http://localhost:5173` (Vite default)
+| Endpoint | Rate Limit |
+|----------|------------|
+| **Global** | 1000 requests per 15 minutes per IP |
+| **Auth Register** | 5 requests per minute |
+| **Auth Login** | 10 requests per minute |
+| **Auth Refresh** | 5 requests per minute |
+| **Image Upload Single** | 10 requests per minute |
+| **Image Upload Multiple** | 5 requests per minute |
+| **Document Upload Single** | 5 requests per minute |
+| **Document Upload Multiple** | 3 requests per minute |
+| **Chunk Upload Initiate** | 10 requests per minute |
+| **Chunk Upload** | 100 requests per minute |
 
 ---
 
-## 🔧 Rate Limiting
+## 📁 File Upload Specifications
 
-- **Global**: 1000 requests per 15 minutes per IP
-- **Auth Register**: 5 requests per minute
-- **Auth Login**: 10 requests per minute
-- **Auth Refresh**: 5 requests per minute
-- **Image Upload Single**: 10 requests per minute
-- **Image Upload Multiple**: 5 requests per minute
-- **Document Upload Single**: 5 requests per minute
-- **Document Upload Multiple**: 3 requests per minute
+### Supported File Types
+
+#### Images
+- **Formats**: jpg, jpeg, png, gif
+- **Max Size**: 5MB (profile images), 10MB (general images)
+- **Processing**: Automatic thumbnail generation
+
+#### Documents
+- **Formats**: pdf, doc, docx, txt, csv, xlsx
+- **Max Size**: 50MB
+- **Processing**: Metadata extraction
+
+#### Videos & Audio
+- **Formats**: mp4, avi, mov, mp3, wav
+- **Max Size**: 500MB
+- **Processing**: Via chunked upload for large files
+
+### Storage Locations
+- **Images**: `/storage/uploads/images/`
+- **Documents**: `/storage/uploads/documents/`
+- **Videos**: `/storage/uploads/videos/`
+- **Audio**: `/storage/uploads/audio/`
+- **Thumbnails**: `/storage/uploads/thumbnails/`
+- **Profiles**: `/uploads/profiles/`
 
 ---
 
 ## 📝 Password Requirements
 
 รหัสผ่านต้องมีคุณสมบัติดังนี้:
-
 - ความยาวอย่างน้อย 8 ตัวอักษร
 - มีตัวอักษรพิมพ์เล็ก (a-z)
 - มีตัวอักษรพิมพ์ใหญ่ (A-Z)
 - มีตัวเลข (0-9)
-- มีอักขระพิเศษ (@$!%\*?&)
+- มีอักขระพิเศษ (@$!%*?&)
 
 **ตัวอย่างรหัสผ่านที่ถูกต้อง:** `Password123!`
 
 ---
 
-## 🚀 Quick Start for Frontend
+## 🌐 CORS Configuration
 
-1. **Login Flow:**
+The API accepts requests from:
+- `http://localhost:3000`
+- `http://localhost:3001`
+- `http://localhost:5173` (Vite default)
+- Configuration via `CORS_ORIGIN` environment variable
+
+---
+
+## 🚀 Quick Start Examples
+
+### 1. Login Flow
 
 ```javascript
 // Login
@@ -675,7 +802,7 @@ if (response.ok) {
 }
 ```
 
-2. **Protected API Call:**
+### 2. Protected API Call
 
 ```javascript
 const token = localStorage.getItem("access_token");
@@ -688,21 +815,74 @@ const response = await fetch("http://localhost:4000/api/posts", {
 });
 ```
 
-3. **Error Handling:**
+### 3. File Upload
+
+```javascript
+const formData = new FormData();
+formData.append('image', fileInput.files[0]);
+formData.append('postId', 'optional-post-id');
+
+const response = await fetch("http://localhost:4000/api/upload/images/single", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+  body: formData,
+});
+```
+
+### 4. Error Handling
 
 ```javascript
 if (!response.ok) {
   const errorData = await response.json();
-
+  
   // Display Thai error message
   if (errorData.message) {
     showErrorMessage(errorData.message);
+  }
+  
+  // Handle specific status codes
+  if (response.status === 401) {
+    // Redirect to login
+    window.location.href = '/login';
   }
 }
 ```
 
 ---
 
+## 📞 Development Notes
+
+### Environment Variables Required:
+```env
+DATABASE_URL="postgresql://user:pass@host:port/db"
+JWT_SECRET="your-jwt-secret"
+JWT_REFRESH_TOKEN_SECRET="your-refresh-secret"
+SUPABASE_URL="https://xxx.supabase.co" (optional)
+SUPABASE_SERVICE_ROLE_KEY="your-service-key" (optional)
+```
+
+### API Versioning:
+- Current version: v1 (implicit)
+- Base path: `/api`
+- Future versions will use `/api/v2`, etc.
+
+### Security Headers:
+- CORS enabled with specific origins
+- Helmet.js for security headers
+- Rate limiting per endpoint
+- JWT token validation
+- Role-based access control
+
+---
+
 ## 📞 Support
 
 หากมีปัญหาหรือข้อสงสัย กรุณาติดต่อทีมพัฒนา
+
+---
+
+**Total Endpoints: 69 routes across 13 controllers**
+
+Last Updated: August 2025

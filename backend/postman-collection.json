@@ -1,0 +1,1596 @@
+{
+	"info": {
+		"_postman_id": "fullstack-api-collection",
+		"name": "Fullstack NestJS API Collection",
+		"description": "Complete API collection for NestJS backend with authentication, file upload, monitoring and more. Total: 69 endpoints across 13 controllers.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "fullstack-api"
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\",\n  \"name\": \"สมชาย ใจดี\",\n  \"role\": \"USER\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "register"]
+						},
+						"description": "Register new user account. Rate limit: 5 requests/minute"
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('access_token', response.access_token);",
+									"    pm.environment.set('refresh_token', response.refresh_token);",
+									"    pm.environment.set('user_id', response.user.id);",
+									"    pm.environment.set('user_role', response.user.role);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						},
+						"description": "Login with email and password. Rate limit: 10 requests/minute. Auto-saves tokens to environment."
+					}
+				},
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/profile",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "profile"]
+						},
+						"description": "Get current user profile information"
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"ชื่อใหม่\",\n  \"email\": \"newemail@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/profile",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "profile"]
+						},
+						"description": "Update user profile information"
+					}
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"oldPassword\": \"OldPassword123!\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/change-password",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "change-password"]
+						},
+						"description": "Change user password"
+					}
+				},
+				{
+					"name": "Upload Profile Image",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/upload-profile-image",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "upload-profile-image"]
+						},
+						"description": "Upload profile image (max 5MB, formats: jpg, jpeg, png, gif)"
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('access_token', response.access_token);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "refresh"]
+						},
+						"description": "Refresh access token. Rate limit: 5 requests/minute"
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout"]
+						},
+						"description": "Logout current user"
+					}
+				},
+				{
+					"name": "Create Admin (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"AdminPass123!\",\n  \"name\": \"ผู้ดูแลระบบ\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/create-admin",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "create-admin"]
+						},
+						"description": "Create new admin user (Admin only)"
+					}
+				},
+				{
+					"name": "Logout All Users (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout-all",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout-all"]
+						},
+						"description": "Logout all users (Admin only)"
+					}
+				},
+				{
+					"name": "Clear All Sessions (Dev)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/clear-sessions",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "clear-sessions"]
+						},
+						"description": "Clear all sessions (Development endpoint)"
+					}
+				}
+			],
+			"description": "Authentication endpoints including register, login, profile management, and admin operations"
+		},
+		{
+			"name": "👥 Users Management",
+			"item": [
+				{
+					"name": "Get All Users (Admin Only)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["users"]
+						},
+						"description": "Get all users (Admin only)"
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{user_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "{{user_id}}"]
+						},
+						"description": "Get specific user by ID (Self or Admin)"
+					}
+				},
+				{
+					"name": "Create User (Admin Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"Password123!\",\n  \"name\": \"ผู้ใช้ใหม่\",\n  \"role\": \"USER\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": ["{{baseUrl}}"],
+							"path": ["users"]
+						},
+						"description": "Create new user (Admin only)"
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"ชื่อใหม่\",\n  \"email\": \"newemail@example.com\",\n  \"role\": \"ADMIN\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/{{user_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "{{user_id}}"]
+						},
+						"description": "Update user information (Self or Admin)"
+					}
+				},
+				{
+					"name": "Delete User (Admin Only)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{user_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "{{user_id}}"]
+						},
+						"description": "Delete user (Admin only)"
+					}
+				},
+				{
+					"name": "Deactivate User (Admin Only)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{user_id}}/deactivate",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "{{user_id}}", "deactivate"]
+						},
+						"description": "Deactivate user account (Admin only)"
+					}
+				},
+				{
+					"name": "Activate User (Admin Only)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{user_id}}/activate",
+							"host": ["{{baseUrl}}"],
+							"path": ["users", "{{user_id}}", "activate"]
+						},
+						"description": "Activate user account (Admin only)"
+					}
+				}
+			],
+			"description": "User management endpoints for CRUD operations and account management"
+		},
+		{
+			"name": "📝 Posts Management",
+			"item": [
+				{
+					"name": "Get All Posts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/posts",
+							"host": ["{{baseUrl}}"],
+							"path": ["posts"]
+						},
+						"description": "Get all posts"
+					}
+				},
+				{
+					"name": "Get My Posts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/posts/my-posts",
+							"host": ["{{baseUrl}}"],
+							"path": ["posts", "my-posts"]
+						},
+						"description": "Get current user's posts"
+					}
+				},
+				{
+					"name": "Get Post by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/posts/{{post_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["posts", "{{post_id}}"]
+						},
+						"description": "Get specific post by ID"
+					}
+				},
+				{
+					"name": "Create Post",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('post_id', response.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"หัวข้อโพสต์\",\n  \"content\": \"เนื้อหาโพสต์...\",\n  \"published\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/posts",
+							"host": ["{{baseUrl}}"],
+							"path": ["posts"]
+						},
+						"description": "Create new post. Auto-saves post ID to environment."
+					}
+				},
+				{
+					"name": "Update Post",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"หัวข้อใหม่\",\n  \"content\": \"เนื้อหาใหม่...\",\n  \"published\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/posts/{{post_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["posts", "{{post_id}}"]
+						},
+						"description": "Update post (Owner or Admin)"
+					}
+				},
+				{
+					"name": "Delete Post",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/posts/{{post_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["posts", "{{post_id}}"]
+						},
+						"description": "Delete post (Owner or Admin)"
+					}
+				}
+			],
+			"description": "Posts management for content creation and management"
+		},
+		{
+			"name": "📁 Image Upload",
+			"item": [
+				{
+					"name": "Upload Single Image",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('file_id', response.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "postId",
+									"value": "{{post_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/upload/images/single",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "images", "single"]
+						},
+						"description": "Upload single image. Rate limit: 10/minute. Auto-saves file ID."
+					}
+				},
+				{
+					"name": "Upload Multiple Images",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "images",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "images",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "postId",
+									"value": "{{post_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/upload/images/multiple",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "images", "multiple"]
+						},
+						"description": "Upload multiple images (max 10). Rate limit: 5/minute."
+					}
+				},
+				{
+					"name": "Get My Images",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/upload/images/my-images",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "images", "my-images"]
+						},
+						"description": "Get current user's uploaded images"
+					}
+				},
+				{
+					"name": "Get Images by Post",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/upload/images/post/{{post_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "images", "post", "{{post_id}}"]
+						},
+						"description": "Get images associated with specific post"
+					}
+				},
+				{
+					"name": "Delete Image",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/upload/images/{{file_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "images", "{{file_id}}"]
+						},
+						"description": "Delete uploaded image"
+					}
+				}
+			],
+			"description": "Image upload endpoints with automatic thumbnail generation"
+		},
+		{
+			"name": "📄 Document Upload",
+			"item": [
+				{
+					"name": "Upload Single Document",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "document",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "postId",
+									"value": "{{post_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/upload/documents/single",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "documents", "single"]
+						},
+						"description": "Upload single document. Rate limit: 5/minute."
+					}
+				},
+				{
+					"name": "Upload Multiple Documents",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "documents",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "documents",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "postId",
+									"value": "{{post_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/upload/documents/multiple",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "documents", "multiple"]
+						},
+						"description": "Upload multiple documents (max 5). Rate limit: 3/minute."
+					}
+				},
+				{
+					"name": "Get My Documents",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/upload/documents/my-documents",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "documents", "my-documents"]
+						},
+						"description": "Get current user's uploaded documents"
+					}
+				},
+				{
+					"name": "Get Documents by Post",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/upload/documents/post/{{post_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "documents", "post", "{{post_id}}"]
+						},
+						"description": "Get documents associated with specific post"
+					}
+				},
+				{
+					"name": "Delete Document",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/upload/documents/{{file_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "documents", "{{file_id}}"]
+						},
+						"description": "Delete uploaded document"
+					}
+				}
+			],
+			"description": "Document upload endpoints supporting various file formats"
+		},
+		{
+			"name": "🔄 Chunked Upload",
+			"item": [
+				{
+					"name": "Initiate Chunked Upload",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set('chunk_file_id', response.fileId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fileName\": \"largefile.mp4\",\n  \"fileSize\": 104857600,\n  \"fileType\": \"video/mp4\",\n  \"chunkSize\": 1048576,\n  \"postId\": \"{{post_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/upload/chunk/initiate",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "chunk", "initiate"]
+						},
+						"description": "Initiate chunked upload for large files. Rate limit: 10/minute."
+					}
+				},
+				{
+					"name": "Upload Chunk",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "fileId",
+									"value": "{{chunk_file_id}}",
+									"type": "text"
+								},
+								{
+									"key": "chunkIndex",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "chunk",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/upload/chunk/upload",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "chunk", "upload"]
+						},
+						"description": "Upload individual chunk. Rate limit: 100/minute."
+					}
+				},
+				{
+					"name": "Complete Chunked Upload",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fileId\": \"{{chunk_file_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/upload/chunk/complete",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "chunk", "complete"]
+						},
+						"description": "Complete chunked upload process"
+					}
+				},
+				{
+					"name": "Get Upload Progress",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/upload/chunk/progress/{{chunk_file_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "chunk", "progress", "{{chunk_file_id}}"]
+						},
+						"description": "Get upload progress for chunked file"
+					}
+				},
+				{
+					"name": "Cancel Upload",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/upload/chunk/cancel/{{chunk_file_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["upload", "chunk", "cancel", "{{chunk_file_id}}"]
+						},
+						"description": "Cancel chunked upload"
+					}
+				}
+			],
+			"description": "Chunked upload endpoints for large file handling"
+		},
+		{
+			"name": "📂 File Management",
+			"item": [
+				{
+					"name": "Serve Image File",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/files/serve/images/{{filename}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["files", "serve", "images", "{{filename}}"]
+						},
+						"description": "Serve image files directly"
+					}
+				},
+				{
+					"name": "Serve Document File",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/files/serve/documents/{{filename}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["files", "serve", "documents", "{{filename}}"]
+						},
+						"description": "Serve document files directly"
+					}
+				},
+				{
+					"name": "Serve Thumbnail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/files/serve/thumbnails/{{filename}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["files", "serve", "thumbnails", "{{filename}}"]
+						},
+						"description": "Serve thumbnail images"
+					}
+				},
+				{
+					"name": "Download File",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/files/download/{{file_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["files", "download", "{{file_id}}"]
+						},
+						"description": "Download file by ID with authentication"
+					}
+				},
+				{
+					"name": "Get File Information",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/files/info/{{file_id}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["files", "info", "{{file_id}}"]
+						},
+						"description": "Get file metadata and information"
+					}
+				},
+				{
+					"name": "List All Files",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/files/list",
+							"host": ["{{baseUrl}}"],
+							"path": ["files", "list"]
+						},
+						"description": "List all user's files"
+					}
+				},
+				{
+					"name": "Get My Files (Paginated)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/files/my-files?type=IMAGE&status=COMPLETED&page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["files", "my-files"],
+							"query": [
+								{
+									"key": "type",
+									"value": "IMAGE"
+								},
+								{
+									"key": "status",
+									"value": "COMPLETED"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get user's files with filtering and pagination"
+					}
+				},
+				{
+					"name": "Get All Files (Paginated)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/files/all-files?type=DOCUMENT&status=COMPLETED&page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["files", "all-files"],
+							"query": [
+								{
+									"key": "type",
+									"value": "DOCUMENT"
+								},
+								{
+									"key": "status",
+									"value": "COMPLETED"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get all files with filtering and pagination"
+					}
+				},
+				{
+					"name": "Get File Statistics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/files/stats",
+							"host": ["{{baseUrl}}"],
+							"path": ["files", "stats"]
+						},
+						"description": "Get file usage statistics"
+					}
+				},
+				{
+					"name": "Get File Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/files/{{file_id}}/details",
+							"host": ["{{baseUrl}}"],
+							"path": ["files", "{{file_id}}", "details"]
+						},
+						"description": "Get detailed file information"
+					}
+				}
+			],
+			"description": "File serving and management endpoints"
+		},
+		{
+			"name": "🏥 Health Checks",
+			"item": [
+				{
+					"name": "Basic Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						},
+						"description": "Basic application health status"
+					}
+				},
+				{
+					"name": "Root Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/",
+							"host": ["{{baseUrl}}"],
+							"path": [""]
+						},
+						"description": "Root endpoint with basic info"
+					}
+				},
+				{
+					"name": "Detailed Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health/detailed",
+							"host": ["{{baseUrl}}"],
+							"path": ["health", "detailed"]
+						},
+						"description": "Detailed health status with system info"
+					}
+				},
+				{
+					"name": "Error Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health/errors",
+							"host": ["{{baseUrl}}"],
+							"path": ["health", "errors"]
+						},
+						"description": "Application error statistics"
+					}
+				}
+			],
+			"description": "Health check endpoints for monitoring application status"
+		},
+		{
+			"name": "📊 Monitoring",
+			"item": [
+				{
+					"name": "Monitoring Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/monitoring/dashboard",
+							"host": ["{{baseUrl}}"],
+							"path": ["monitoring", "dashboard"]
+						},
+						"description": "Get complete monitoring dashboard data"
+					}
+				},
+				{
+					"name": "System Metrics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/monitoring/system",
+							"host": ["{{baseUrl}}"],
+							"path": ["monitoring", "system"]
+						},
+						"description": "Get system performance metrics"
+					}
+				},
+				{
+					"name": "Database Metrics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/monitoring/database",
+							"host": ["{{baseUrl}}"],
+							"path": ["monitoring", "database"]
+						},
+						"description": "Get database performance metrics"
+					}
+				},
+				{
+					"name": "Storage Metrics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/monitoring/storage",
+							"host": ["{{baseUrl}}"],
+							"path": ["monitoring", "storage"]
+						},
+						"description": "Get file storage metrics"
+					}
+				},
+				{
+					"name": "API Metrics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/monitoring/api?hours=24",
+							"host": ["{{baseUrl}}"],
+							"path": ["monitoring", "api"],
+							"query": [
+								{
+									"key": "hours",
+									"value": "24"
+								}
+							]
+						},
+						"description": "Get API usage metrics for specified time period"
+					}
+				},
+				{
+					"name": "Monitoring Health Check",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/monitoring/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["monitoring", "health"]
+						},
+						"description": "Get monitoring system health status"
+					}
+				},
+				{
+					"name": "Active Alerts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/monitoring/alerts",
+							"host": ["{{baseUrl}}"],
+							"path": ["monitoring", "alerts"]
+						},
+						"description": "Get active system alerts"
+					}
+				},
+				{
+					"name": "Performance Metrics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/monitoring/performance?period=1h",
+							"host": ["{{baseUrl}}"],
+							"path": ["monitoring", "performance"],
+							"query": [
+								{
+									"key": "period",
+									"value": "1h"
+								}
+							]
+						},
+						"description": "Get performance metrics for specified period"
+					}
+				}
+			],
+			"description": "Comprehensive monitoring endpoints for system observability"
+		},
+		{
+			"name": "📋 Error Messages",
+			"item": [
+				{
+					"name": "Get Auth Error Messages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/error-messages/auth",
+							"host": ["{{baseUrl}}"],
+							"path": ["error-messages", "auth"]
+						},
+						"description": "Get authentication-related error messages in Thai"
+					}
+				},
+				{
+					"name": "Get Validation Error Messages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/error-messages/validation",
+							"host": ["{{baseUrl}}"],
+							"path": ["error-messages", "validation"]
+						},
+						"description": "Get validation error messages in Thai"
+					}
+				},
+				{
+					"name": "Get UI Error Messages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/error-messages/ui",
+							"host": ["{{baseUrl}}"],
+							"path": ["error-messages", "ui"]
+						},
+						"description": "Get UI-related error messages in Thai"
+					}
+				},
+				{
+					"name": "Get All Error Messages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/error-messages/all",
+							"host": ["{{baseUrl}}"],
+							"path": ["error-messages", "all"]
+						},
+						"description": "Get all error messages for frontend use"
+					}
+				}
+			],
+			"description": "Error message endpoints providing Thai language error messages"
+		},
+		{
+			"name": "🎨 Frontend Helpers",
+			"item": [
+				{
+					"name": "Get Specific Error Message",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/frontend/error-message?type=login&field=email&code=invalid",
+							"host": ["{{baseUrl}}"],
+							"path": ["frontend", "error-message"],
+							"query": [
+								{
+									"key": "type",
+									"value": "login"
+								},
+								{
+									"key": "field",
+									"value": "email"
+								},
+								{
+									"key": "code",
+									"value": "invalid"
+								}
+							]
+						},
+						"description": "Get specific error message with parameters"
+					}
+				},
+				{
+					"name": "Get Form Configuration",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/frontend/form-config",
+							"host": ["{{baseUrl}}"],
+							"path": ["frontend", "form-config"]
+						},
+						"description": "Get form configuration for frontend components"
+					}
+				},
+				{
+					"name": "Get UI Text",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/frontend/ui-text",
+							"host": ["{{baseUrl}}"],
+							"path": ["frontend", "ui-text"]
+						},
+						"description": "Get UI text translations for frontend"
+					}
+				}
+			],
+			"description": "Frontend helper endpoints for form configurations and UI text"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-refresh token if needed",
+					"const token = pm.environment.get('access_token');",
+					"const refreshToken = pm.environment.get('refresh_token');",
+					"",
+					"if (!token && refreshToken) {",
+					"    console.log('No access token, attempting refresh...');",
+					"    // Could add auto-refresh logic here",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script for all requests",
+					"if (pm.response.code === 401) {",
+					"    console.log('Unauthorized: Token may be expired');",
+					"}",
+					"",
+					"if (pm.response.code === 429) {",
+					"    console.log('Rate limit exceeded. Please wait before retrying.');",
+					"}",
+					"",
+					"// Log response time for performance monitoring",
+					"console.log('Response time: ' + pm.response.responseTime + 'ms');",
+					"",
+					"// Store common response data",
+					"if (pm.response.code >= 200 && pm.response.code < 300) {",
+					"    try {",
+					"        const response = pm.response.json();",
+					"        if (response.id) {",
+					"            pm.environment.set('last_created_id', response.id);",
+					"        }",
+					"    } catch (e) {",
+					"        // Not JSON response",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:4000/api",
+			"type": "string"
+		}
+	]
+}
