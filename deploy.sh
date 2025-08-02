@@ -202,7 +202,11 @@ build_backend() {
         # Build command
         BUILD_CMD="docker buildx build"
         BUILD_CMD="$BUILD_CMD -f Dockerfile.ultra-fast"
-        BUILD_CMD="$BUILD_CMD --platform linux/amd64,linux/arm64"
+        if [ "$PUSH_IMAGES" = true ]; then
+            BUILD_CMD="$BUILD_CMD --platform linux/amd64,linux/arm64"
+        else
+            BUILD_CMD="$BUILD_CMD --platform linux/amd64"
+        fi
         # BUILD_CMD="$BUILD_CMD --cache-from type=local,src=/tmp/.buildx-cache-backend"
         # BUILD_CMD="$BUILD_CMD --cache-to type=local,dest=/tmp/.buildx-cache-backend-new,mode=max"
         BUILD_CMD="$BUILD_CMD $BUILD_ARGS $TAGS"
@@ -258,7 +262,11 @@ build_frontend() {
         
         # Build command
         BUILD_CMD="docker buildx build"
-        BUILD_CMD="$BUILD_CMD --platform linux/amd64,linux/arm64"
+        if [ "$PUSH_IMAGES" = true ]; then
+            BUILD_CMD="$BUILD_CMD --platform linux/amd64,linux/arm64"
+        else
+            BUILD_CMD="$BUILD_CMD --platform linux/amd64"
+        fi
         # BUILD_CMD="$BUILD_CMD --cache-from type=local,src=/tmp/.buildx-cache-frontend"
         # BUILD_CMD="$BUILD_CMD --cache-to type=local,dest=/tmp/.buildx-cache-frontend-new,mode=max"
         BUILD_CMD="$BUILD_CMD $BUILD_ARGS $TAGS"
