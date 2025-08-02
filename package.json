@@ -21,16 +21,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/YOUR_USERNAME/YOUR_REPO.git"
+    "url": "git+https://github.com/naphatd1/fullstacks.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/YOUR_USERNAME/YOUR_REPO/issues"
+    "url": "https://github.com/naphatd1/fullstacks/issues"
   },
-  "homepage": "https://github.com/YOUR_USERNAME/YOUR_REPO#readme",
+  "homepage": "https://github.com/naphatd1/fullstacks#readme",
   "devDependencies": {
     "npm-run-all": "^4.1.5"
   }
