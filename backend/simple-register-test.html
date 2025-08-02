@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Register Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .result { margin: 20px 0; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Simple Register Test</h1>
+        
+        <form id="registerForm">
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" id="name" value="Test User" required>
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" value="" required>
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="password" value="Test123!@#" required>
+            </div>
+            <button type="submit" id="submitBtn">Register</button>
+        </form>
+        
+        <div id="result"></div>
+        
+        <div class="info">
+            <h3>Debug Information</h3>
+            <div id="debugInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        
+        // Generate unique email
+        document.getElementById('email').value = `test${Date.now()}@example.com`;
+        
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+        
+        function updateDebugInfo(info) {
+            const debugDiv = document.getElementById('debugInfo');
+            debugDiv.innerHTML = `<pre>${JSON.stringify(info, null, 2)}</pre>`;
+        }
+        
+        async function testRegister(formData) {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registering...';
+            
+            showResult('Testing register...', 'info');
+            
+            const debugInfo = {
+                timestamp: new Date().toISOString(),
+                apiUrl: API_URL,
+                formData: {
+                    name: formData.name,
+                    email: formData.email,
+                    passwordLength: formData.password.length
+                },
+                step: 'Starting'
+            };
+            
+            try {
+                debugInfo.step = 'Making API call';
+                updateDebugInfo(debugInfo);
+                
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                debugInfo.response = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+                debugInfo.step = 'Response received';
+                updateDebugInfo(debugInfo);
+                
+                if (!response.ok) {
+                    let errorText;
+                    try {
+                        errorText = await response.text();
+                        debugInfo.errorText = errorText;
+                    } catch (e) {
+                        errorText = 'Could not read error response';
+                        debugInfo.errorReadError = e.message;
+                    }
+                    
+                    debugInfo.step = 'Error response';
+                    updateDebugInfo(debugInfo);
+                    
+                    showResult(`
+                        <h4>❌ Registration Failed</h4>
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <p><strong>Error:</strong> ${errorText}</p>
+                        <p><strong>Possible causes:</strong></p>
+                        <ul>
+                            <li>Rate limiting (too many requests)</li>
+                            <li>Email already exists</li>
+                            <li>Invalid data format</li>
+                            <li>Server error</li>
+                        </ul>
+                    `, 'error');
+                    return;
+                }
+                
+                debugInfo.step = 'Parsing response';
+                updateDebugInfo(debugInfo);
+                
+                const data = await response.json();
+                debugInfo.responseData = {
+                    hasAccessToken: !!data.access_token,
+                    hasRefreshToken: !!data.refresh_token,
+                    user: data.user,
+                    expiresIn: data.expires_in
+                };
+                debugInfo.step = 'Success';
+                updateDebugInfo(debugInfo);
+                
+                showResult(`
+                    <h4>✅ Registration Successful!</h4>
+                    <p><strong>User:</strong> ${data.user.email}</p>
+                    <p><strong>Name:</strong> ${data.user.name}</p>
+                    <p><strong>Role:</strong> ${data.user.role}</p>
+                    <p><strong>User ID:</strong> ${data.user.id}</p>
+                    <p><strong>Has Tokens:</strong> ${data.access_token ? 'Yes' : 'No'}</p>
+                    <p><strong>Expected Behavior:</strong></p>
+                    <ul>
+                        <li>✅ User created in database</li>
+                        <li>✅ API returns user data and tokens</li>
+                        <li>⚠️ Frontend should redirect to login (not auto-login)</li>
+                    </ul>
+                    <p><strong>Next Steps:</strong></p>
+                    <ul>
+                        <li>Try logging in with: ${data.user.email}</li>
+                        <li>Password: ${formData.password}</li>
+                    </ul>
+                `, 'success');
+                
+            } catch (error) {
+                debugInfo.networkError = {
+                    message: error.message,
+                    name: error.name,
+                    stack: error.stack
+                };
+                debugInfo.step = 'Network error';
+                updateDebugInfo(debugInfo);
+                
+                showResult(`
+                    <h4>💥 Network Error</h4>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Possible causes:</strong></p>
+                    <ul>
+                        <li>Backend server not running</li>
+                        <li>CORS issues</li>
+                        <li>Network connectivity problems</li>
+                        <li>Firewall blocking requests</li>
+                    </ul>
+                    <p><strong>Solutions:</strong></p>
+                    <ul>
+                        <li>Check if backend is running on port 4000</li>
+                        <li>Try: <code>curl ${API_URL}/health</code></li>
+                        <li>Check browser console for CORS errors</li>
+                    </ul>
+                `, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Register';
+            }
+        }
+        
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+            
+            await testRegister(formData);
+        });
+        
+        // Initial debug info
+        updateDebugInfo({
+            message: 'Ready to test registration',
+            apiUrl: API_URL,
+            timestamp: new Date().toISOString(),
+            browserInfo: {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug API Connection</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        .warning { background: #fff3cd; border-color: #ffeaa7; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        .status { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug API Connection</h1>
+        
+        <div class="test info">
+            <h3>Test 1: Basic Connectivity</h3>
+            <button onclick="testBasicConnectivity()">Test Basic Connection</button>
+            <div id="basicResult"></div>
+        </div>
+        
+        <div class="test info">
+            <h3>Test 2: Health Check</h3>
+            <button onclick="testHealthCheck()">Test Health Endpoint</button>
+            <div id="healthResult"></div>
+        </div>
+        
+        <div class="test info">
+            <h3>Test 3: CORS Check</h3>
+            <button onclick="testCORS()">Test CORS Headers</button>
+            <div id="corsResult"></div>
+        </div>
+        
+        <div class="test info">
+            <h3>Test 4: Register Endpoint</h3>
+            <button onclick="testRegisterEndpoint()">Test Register API</button>
+            <div id="registerResult"></div>
+        </div>
+        
+        <div class="test info">
+            <h3>Test 5: Rate Limiting</h3>
+            <button onclick="testRateLimiting()">Test Rate Limits</button>
+            <div id="rateLimitResult"></div>
+        </div>
+        
+        <div class="test info">
+            <h3>System Information</h3>
+            <div id="systemInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${content}</div>`;
+        }
+        
+        async function testBasicConnectivity() {
+            showResult('basicResult', 'Testing basic connectivity...', 'info');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                showResult('basicResult', `
+                    <h4 class="status">✅ Basic Connectivity: OK</h4>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Status Text:</strong> ${response.statusText}</p>
+                    <p><strong>URL:</strong> ${API_URL}</p>
+                `, 'success');
+                
+            } catch (error) {
+                showResult('basicResult', `
+                    <h4 class="status">❌ Basic Connectivity: FAILED</h4>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Possible Issues:</strong></p>
+                    <ul>
+                        <li>Backend server not running</li>
+                        <li>Wrong port (should be 4000)</li>
+                        <li>Firewall blocking connection</li>
+                    </ul>
+                `, 'error');
+            }
+        }
+        
+        async function testHealthCheck() {
+            showResult('healthResult', 'Testing health endpoint...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                
+                showResult('healthResult', `
+                    <h4 class="status">✅ Health Check: OK</h4>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Response:</strong></p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `, 'success');
+                
+            } catch (error) {
+                showResult('healthResult', `
+                    <h4 class="status">❌ Health Check: FAILED</h4>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `, 'error');
+            }
+        }
+        
+        async function testCORS() {
+            showResult('corsResult', 'Testing CORS headers...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Origin': window.location.origin
+                    }
+                });
+                
+                const corsHeaders = {
+                    'access-control-allow-origin': response.headers.get('access-control-allow-origin'),
+                    'access-control-allow-methods': response.headers.get('access-control-allow-methods'),
+                    'access-control-allow-headers': response.headers.get('access-control-allow-headers'),
+                    'access-control-allow-credentials': response.headers.get('access-control-allow-credentials')
+                };
+                
+                const hasValidCORS = corsHeaders['access-control-allow-origin'] !== null;
+                
+                showResult('corsResult', `
+                    <h4 class="status">${hasValidCORS ? '✅' : '⚠️'} CORS Check: ${hasValidCORS ? 'OK' : 'WARNING'}</h4>
+                    <p><strong>CORS Headers:</strong></p>
+                    <pre>${JSON.stringify(corsHeaders, null, 2)}</pre>
+                    ${!hasValidCORS ? '<p><strong>Note:</strong> CORS headers might be missing, but this could be normal for same-origin requests.</p>' : ''}
+                `, hasValidCORS ? 'success' : 'warning');
+                
+            } catch (error) {
+                showResult('corsResult', `
+                    <h4 class="status">❌ CORS Check: FAILED</h4>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `, 'error');
+            }
+        }
+        
+        async function testRegisterEndpoint() {
+            showResult('registerResult', 'Testing register endpoint...', 'info');
+            
+            const testData = {
+                name: 'Test User',
+                email: `test${Date.now()}@example.com`,
+                password: 'Test123!@#'
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('registerResult', `
+                        <h4 class="status">✅ Register Endpoint: OK</h4>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>User Created:</strong> ${data.user.email}</p>
+                        <p><strong>Has Tokens:</strong> ${data.access_token ? 'Yes' : 'No'}</p>
+                        <p><strong>Response Structure:</strong></p>
+                        <pre>${JSON.stringify({
+                            user: data.user,
+                            hasAccessToken: !!data.access_token,
+                            hasRefreshToken: !!data.refresh_token,
+                            expiresIn: data.expires_in
+                        }, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    const errorText = await response.text();
+                    showResult('registerResult', `
+                        <h4 class="status">❌ Register Endpoint: FAILED</h4>
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <p><strong>Error:</strong> ${errorText}</p>
+                    `, 'error');
+                }
+                
+            } catch (error) {
+                showResult('registerResult', `
+                    <h4 class="status">❌ Register Endpoint: NETWORK ERROR</h4>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `, 'error');
+            }
+        }
+        
+        async function testRateLimiting() {
+            showResult('rateLimitResult', 'Testing rate limiting (making 3 quick requests)...', 'info');
+            
+            const results = [];
+            
+            for (let i = 1; i <= 3; i++) {
+                try {
+                    const testData = {
+                        name: 'Rate Test User',
+                        email: `ratetest${Date.now()}_${i}@example.com`,
+                        password: 'Test123!@#'
+                    };
+                    
+                    const startTime = Date.now();
+                    const response = await fetch(`${API_URL}/auth/register`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(testData)
+                    });
+                    const endTime = Date.now();
+                    
+                    results.push({
+                        attempt: i,
+                        status: response.status,
+                        statusText: response.statusText,
+                        responseTime: endTime - startTime,
+                        success: response.ok
+                    });
+                    
+                    // Small delay between requests
+                    if (i < 3) await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                } catch (error) {
+                    results.push({
+                        attempt: i,
+                        error: error.message,
+                        success: false
+                    });
+                }
+            }
+            
+            const rateLimited = results.some(r => r.status === 429);
+            
+            showResult('rateLimitResult', `
+                <h4 class="status">${rateLimited ? '⚠️' : '✅'} Rate Limiting: ${rateLimited ? 'ACTIVE' : 'OK'}</h4>
+                <p><strong>Test Results:</strong></p>
+                <pre>${JSON.stringify(results, null, 2)}</pre>
+                ${rateLimited ? '<p><strong>Note:</strong> Rate limiting is active. This is normal behavior.</p>' : ''}
+            `, rateLimited ? 'warning' : 'success');
+        }
+        
+        // Show system information
+        function showSystemInfo() {
+            const info = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                platform: navigator.platform,
+                apiUrl: API_URL,
+                origin: window.location.origin,
+                protocol: window.location.protocol
+            };
+            
+            document.getElementById('systemInfo').innerHTML = `
+                <h4>System Information</h4>
+                <pre>${JSON.stringify(info, null, 2)}</pre>
+            `;
+        }
+        
+        // Auto-run system info on load
+        window.addEventListener('load', showSystemInfo);
+    </script>
+</body>
+</html>

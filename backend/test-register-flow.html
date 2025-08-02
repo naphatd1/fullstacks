@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Register → Login Flow</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .form-group { margin: 10px 0; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Register → Login Flow</h1>
+        
+        <div class="step info">
+            <h3>Step 1: Register New User</h3>
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" id="name" value="Test User">
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" value="">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="password" value="Test123!@#">
+            </div>
+            <button onclick="testRegister()">Register User</button>
+            <div id="registerResult"></div>
+        </div>
+        
+        <div class="step info">
+            <h3>Step 2: Test Login with Same Credentials</h3>
+            <button onclick="testLogin()" disabled id="loginBtn">Login (Register first)</button>
+            <div id="loginResult"></div>
+        </div>
+        
+        <div class="step info">
+            <h3>Step 3: Frontend Flow Test</h3>
+            <p>After successful registration:</p>
+            <ol>
+                <li>User should NOT be automatically logged in</li>
+                <li>No tokens should be saved in sessionStorage</li>
+                <li>User should be redirected to login page</li>
+                <li>Login page should show success message</li>
+            </ol>
+            <button onclick="testFrontendFlow()">Test Frontend Flow</button>
+            <div id="frontendResult"></div>
+        </div>
+        
+        <div class="step info">
+            <h3>Debug Information</h3>
+            <div id="debugInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        let testCredentials = null;
+        
+        // Generate unique email
+        document.getElementById('email').value = `test${Date.now()}@example.com`;
+        
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${content}</div>`;
+        }
+        
+        async function testRegister() {
+            try {
+                showResult('registerResult', 'Registering user...', 'info');
+                
+                testCredentials = {
+                    name: document.getElementById('name').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                };
+                
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testCredentials)
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                
+                showResult('registerResult', `
+                    <h4>✅ Registration Success</h4>
+                    <p><strong>User:</strong> ${data.user.email}</p>
+                    <p><strong>Role:</strong> ${data.user.role}</p>
+                    <p><strong>Expected Behavior:</strong></p>
+                    <ul>
+                        <li>✅ User created successfully</li>
+                        <li>⚠️ Should NOT save tokens automatically</li>
+                        <li>⚠️ Should redirect to login page</li>
+                    </ul>
+                `, 'success');
+                
+                // Enable login button
+                document.getElementById('loginBtn').disabled = false;
+                document.getElementById('loginBtn').textContent = 'Login with Registered User';
+                
+            } catch (error) {
+                showResult('registerResult', `
+                    <h4>❌ Registration Failed</h4>
+                    <p>Error: ${error.message}</p>
+                `, 'error');
+            }
+        }
+        
+        async function testLogin() {
+            if (!testCredentials) {
+                showResult('loginResult', 'Please register a user first', 'error');
+                return;
+            }
+            
+            try {
+                showResult('loginResult', 'Testing login...', 'info');
+                
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: testCredentials.email,
+                        password: testCredentials.password
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                
+                showResult('loginResult', `
+                    <h4>✅ Login Success</h4>
+                    <p><strong>User:</strong> ${data.user.email}</p>
+                    <p><strong>Has Access Token:</strong> ${!!data.access_token}</p>
+                    <p><strong>Has Refresh Token:</strong> ${!!data.refresh_token}</p>
+                    <p><strong>Expected Behavior:</strong></p>
+                    <ul>
+                        <li>✅ Login successful with registered credentials</li>
+                        <li>✅ Tokens provided for authentication</li>
+                        <li>✅ User can now access protected routes</li>
+                    </ul>
+                `, 'success');
+                
+            } catch (error) {
+                showResult('loginResult', `
+                    <h4>❌ Login Failed</h4>
+                    <p>Error: ${error.message}</p>
+                `, 'error');
+            }
+        }
+        
+        function testFrontendFlow() {
+            // Check if tokens are NOT saved after registration
+            const hasTokens = !!(sessionStorage.getItem('access_token') || localStorage.getItem('access_token'));
+            const hasUser = !!(sessionStorage.getItem('user') || localStorage.getItem('user'));
+            
+            showResult('frontendResult', `
+                <h4>🔍 Frontend Flow Check</h4>
+                <p><strong>Tokens in Storage:</strong> ${hasTokens ? '❌ Found (Should NOT be there)' : '✅ Not Found (Correct)'}</p>
+                <p><strong>User in Storage:</strong> ${hasUser ? '❌ Found (Should NOT be there)' : '✅ Not Found (Correct)'}</p>
+                <p><strong>Expected Flow:</strong></p>
+                <ol>
+                    <li>User registers → Success message</li>
+                    <li>No automatic login → No tokens saved</li>
+                    <li>Redirect to login page → Show success message</li>
+                    <li>User manually logs in → Tokens saved</li>
+                    <li>Access to dashboard → Full authentication</li>
+                </ol>
+                <p><strong>Test Frontend:</strong></p>
+                <ul>
+                    <li><a href="http://localhost:3000/auth/register" target="_blank">Register Page</a></li>
+                    <li><a href="http://localhost:3000/auth/login?registered=true" target="_blank">Login Page (with success message)</a></li>
+                    <li><a href="http://localhost:3000/dashboard" target="_blank">Dashboard (should require login)</a></li>
+                </ul>
+            `, hasTokens || hasUser ? 'error' : 'success');
+        }
+        
+        // Auto-update debug info
+        setInterval(() => {
+            const debugInfo = {
+                timestamp: new Date().toISOString(),
+                testCredentials: testCredentials ? {
+                    email: testCredentials.email,
+                    hasPassword: !!testCredentials.password
+                } : null,
+                storage: {
+                    sessionStorage: {
+                        access_token: sessionStorage.getItem('access_token') ? 'Present' : 'Not Found',
+                        user: sessionStorage.getItem('user') ? 'Present' : 'Not Found'
+                    },
+                    localStorage: {
+                        access_token: localStorage.getItem('access_token') ? 'Present' : 'Not Found',
+                        user: localStorage.getItem('user') ? 'Present' : 'Not Found'
+                    }
+                }
+            };
+            
+            document.getElementById('debugInfo').innerHTML = `
+                <h4>🔍 Current State</h4>
+                <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
+            `;
+        }, 2000);
+    </script>
+</body>
+</html>

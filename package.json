@@ -1,0 +1,37 @@
+{
+  "name": "nest-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npm-run-all --parallel frontend backend",
+    "frontend": "npm run dev --prefix frontend",
+    "backend": "npm run start:dev --prefix backend",
+    "deploy": "./deploy.sh",
+    "deploy:backend": "./deploy.sh --backend-only",
+    "deploy:frontend": "./deploy.sh --frontend-only",
+    "deploy:push": "./deploy.sh --push",
+    "deploy:server": "./deploy.sh --deploy",
+    "deploy:backend:server": "./deploy.sh --backend-only --deploy",
+    "deploy:frontend:server": "./deploy.sh --frontend-only --deploy",
+    "deploy:staging": "./deploy.sh --env staging --deploy",
+    "build": "./deploy.sh",
+    "build:backend": "./deploy.sh --backend-only",
+    "build:frontend": "./deploy.sh --frontend-only"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_USERNAME/YOUR_REPO.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/YOUR_REPO/issues"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/YOUR_REPO#readme",
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  }
+}

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Auth Flow</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .step { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Authentication Flow</h1>
+        
+        <div class="step info">
+            <h3>Step 1: Test API Connection</h3>
+            <button onclick="testConnection()">Test Connection</button>
+            <div id="connectionResult"></div>
+        </div>
+        
+        <div class="step info">
+            <h3>Step 2: Register New User</h3>
+            <button onclick="testRegister()">Register Test User</button>
+            <div id="registerResult"></div>
+        </div>
+        
+        <div class="step info">
+            <h3>Step 3: Test Profile Access</h3>
+            <button onclick="testProfile()">Test Profile Access</button>
+            <div id="profileResult"></div>
+        </div>
+        
+        <div class="step info">
+            <h3>Step 4: Test Frontend Auth State</h3>
+            <button onclick="testFrontendAuth()">Test Frontend Auth</button>
+            <div id="frontendResult"></div>
+        </div>
+        
+        <div class="step info">
+            <h3>Debug Information</h3>
+            <div id="debugInfo"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:4000/api';
+        let authTokens = null;
+        
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${content}</div>`;
+        }
+        
+        async function testConnection() {
+            try {
+                showResult('connectionResult', 'Testing connection...', 'info');
+                
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                
+                showResult('connectionResult', `
+                    <h4>✅ Connection Success</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `, 'success');
+                
+            } catch (error) {
+                showResult('connectionResult', `
+                    <h4>❌ Connection Failed</h4>
+                    <p>Error: ${error.message}</p>
+                    <p>Make sure the backend server is running on port 4000</p>
+                `, 'error');
+            }
+        }
+        
+        async function testRegister() {
+            try {
+                showResult('registerResult', 'Registering test user...', 'info');
+                
+                const testUser = {
+                    name: 'Test User',
+                    email: `test${Date.now()}@example.com`,
+                    password: 'Test123!@#'
+                };
+                
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testUser)
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                authTokens = data;
+                
+                showResult('registerResult', `
+                    <h4>✅ Registration Success</h4>
+                    <p><strong>User:</strong> ${data.user.email}</p>
+                    <p><strong>Role:</strong> ${data.user.role}</p>
+                    <p><strong>Has Access Token:</strong> ${!!data.access_token}</p>
+                    <p><strong>Has Refresh Token:</strong> ${!!data.refresh_token}</p>
+                    <p><strong>Expires In:</strong> ${data.expires_in} seconds</p>
+                `, 'success');
+                
+            } catch (error) {
+                showResult('registerResult', `
+                    <h4>❌ Registration Failed</h4>
+                    <p>Error: ${error.message}</p>
+                `, 'error');
+            }
+        }
+        
+        async function testProfile() {
+            if (!authTokens) {
+                showResult('profileResult', `
+                    <h4>⚠️ No Auth Tokens</h4>
+                    <p>Please register a user first</p>
+                `, 'error');
+                return;
+            }
+            
+            try {
+                showResult('profileResult', 'Testing profile access...', 'info');
+                
+                const response = await fetch(`${API_URL}/auth/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${authTokens.access_token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                
+                showResult('profileResult', `
+                    <h4>✅ Profile Access Success</h4>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `, 'success');
+                
+            } catch (error) {
+                showResult('profileResult', `
+                    <h4>❌ Profile Access Failed</h4>
+                    <p>Error: ${error.message}</p>
+                `, 'error');
+            }
+        }
+        
+        async function testFrontendAuth() {
+            if (!authTokens) {
+                showResult('frontendResult', `
+                    <h4>⚠️ No Auth Tokens</h4>
+                    <p>Please register a user first</p>
+                `, 'error');
+                return;
+            }
+            
+            try {
+                showResult('frontendResult', 'Testing frontend auth simulation...', 'info');
+                
+                // Simulate what frontend does
+                sessionStorage.setItem('access_token', authTokens.access_token);
+                sessionStorage.setItem('refresh_token', authTokens.refresh_token);
+                sessionStorage.setItem('user', JSON.stringify(authTokens.user));
+                sessionStorage.setItem('auth_timestamp', Date.now().toString());
+                
+                // Check storage
+                const hasToken = !!sessionStorage.getItem('access_token');
+                const hasUser = !!sessionStorage.getItem('user');
+                const hasTimestamp = !!sessionStorage.getItem('auth_timestamp');
+                
+                showResult('frontendResult', `
+                    <h4>✅ Frontend Auth Simulation</h4>
+                    <p><strong>Token Stored:</strong> ${hasToken}</p>
+                    <p><strong>User Stored:</strong> ${hasUser}</p>
+                    <p><strong>Timestamp Stored:</strong> ${hasTimestamp}</p>
+                    <p><strong>Storage Type:</strong> sessionStorage</p>
+                    <p><strong>Next Step:</strong> Try accessing dashboard at <a href="http://localhost:3000/dashboard" target="_blank">http://localhost:3000/dashboard</a></p>
+                `, 'success');
+                
+            } catch (error) {
+                showResult('frontendResult', `
+                    <h4>❌ Frontend Auth Simulation Failed</h4>
+                    <p>Error: ${error.message}</p>
+                `, 'error');
+            }
+        }
+        
+        // Auto-update debug info
+        setInterval(() => {
+            const debugInfo = {
+                timestamp: new Date().toISOString(),
+                sessionStorage: {
+                    access_token: sessionStorage.getItem('access_token') ? 'Present' : 'Missing',
+                    refresh_token: sessionStorage.getItem('refresh_token') ? 'Present' : 'Missing',
+                    user: sessionStorage.getItem('user') ? 'Present' : 'Missing',
+                    auth_timestamp: sessionStorage.getItem('auth_timestamp')
+                },
+                authTokens: authTokens ? {
+                    hasAccessToken: !!authTokens.access_token,
+                    hasRefreshToken: !!authTokens.refresh_token,
+                    userEmail: authTokens.user?.email,
+                    userRole: authTokens.user?.role
+                } : null
+            };
+            
+            document.getElementById('debugInfo').innerHTML = `
+                <h4>🔍 Current State</h4>
+                <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
+            `;
+        }, 2000);
+    </script>
+</body>
+</html>
